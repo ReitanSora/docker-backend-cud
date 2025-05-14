@@ -1,0 +1,13 @@
+services:
+  docker-backend-1:
+    image: reitansora/docker-backend-1:latest
+    ports:
+      - '5000:5000'
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    networks:
+      - docker-network
+
+networks:
+  docker-network:
+    external: true
