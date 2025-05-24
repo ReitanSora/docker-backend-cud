@@ -1,9 +1,13 @@
-name: Digital Ocean Deploy on Pull Request Merged
+name: Deploy App to Digital Ocean on Pull Request Merged
 
 on:
   pull_request:
     branches: [master]
     types: [closed]
+
+permissions:
+  contents: read
+  deployments: write
 
 jobs:
   verify:
@@ -17,7 +21,7 @@ jobs:
 
   deploy:
     needs: [verify]
-    name: Deploy to Digital Ocean
+    name: Deploy App to Digital Ocean
     runs-on: ubuntu-latest
     outputs:
       app-url: ${{ steps.set-output.outputs.app_url }} 
