@@ -1,0 +1,18 @@
+name: Digital Ocean Deploy on Pull Request Merged
+on:
+  pull_request:
+    branches: 
+      - master
+    types: 
+      - closed
+jobs:
+  deploy:
+    name: Deploy if the pull request is merged
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: inspire-labs-tms-tech/digital-ocean-deploy-action@2.0.2
+        with:
+          app-id: ${{secrets.DO_APP_ID}}
+          api-key: ${{secrets.DO_API_KEY}}
+          force: "true"
