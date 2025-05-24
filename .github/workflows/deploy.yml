@@ -15,7 +15,7 @@ jobs:
     steps:
       - 
         name: Success Message
-        run: echo "🎉 A pull request is merge by ${{ github.event.pull_request.merged_by }}"
+        run: echo "🎉 A pull request is merged by ${{ github.event.pull_request.merged_by.login}}"
 
   deploy:
     needs: [verify]
