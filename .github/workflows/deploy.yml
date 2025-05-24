@@ -19,17 +19,56 @@ jobs:
     needs: [verify]
     name: Deploy to Digital Ocean
     runs-on: ubuntu-latest
+    outputs:
+      app-url: ${{ steps.set-output.outputs.app_url }} 
     steps:
       - 
-        name: Deploy
-        uses: inspire-labs-tms-tech/digital-ocean-deploy-action@2.0.2
+        name: Checkout repository
+        uses: actions/checkout@v4
+      - 
+        name: Deploy the app
+        id: deploy
+        uses: digitalocean/app_action/deploy@v2
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         with:
-          app-id: ${{ secrets.DO_APP_ID }}
-          api-key: ${{ secrets.DO_API_KEY }}
-          force: "true"
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+          project_id: ${{ secrets.DIGITALOCEAN_PROJECT_ID }}
+      -
+        name: Extract App URL
+        id: set-output
+        run: |
+            APP_URL=$(echo '${{ steps.deploy.outputs.app }}' | jq -r '.default_ingress')
+            echo "app_url=$APP_URL" >> $GITHUB_OUTPUT
+            echo "URL obtenida: $APP_URL"
+      - 
+        name: Update GitHub Deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const url = '${{ steps.set-output.outputs.app_url }}';
+            
+            const deployment = await github.rest.repos.createDeployment({
+              owner,
+              repo,
+              ref: context.sha,
+              environment: 'Production',
+              auto_merge: false,
+            });
+
+            await github.rest.repos.createDeploymentStatus({
+              owner,
+              repo,
+              deployment_id: deployment.data.id,
+              state: 'success',
+              environment_url: url,
+              log_url: url,
+              description: 'Successfully deployed to DigitalOcean'
+            });
   
   docker:
-    needs: [verify]
+    needs: [verify, deploy]
     name: Build container image and push to Docker Hub
     runs-on: ubuntu-latest
     steps:
