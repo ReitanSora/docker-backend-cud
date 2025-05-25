@@ -100,3 +100,36 @@ jobs:
           context: .
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.PROJECT_NAME }}:latest
+  
+  ec2:
+    needs: [docker]
+    name: Connect to EC2 instance and deploy the Docker image
+    runs-on: ubuntu-latest
+    env: 
+      EC2_SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+      EC2_URL: ${{ secrets.EC2_PUBLIC_DNS }}
+      EC2_USERNAME: ${{ secrets.EC2_USERNAME }}
+    steps:
+      -
+        name: Setup SSH for EC2
+        uses: omarhosny206/setup-ssh-for-ec2@v1.0.0
+        with:
+          EC2_SSH_PRIVATE_KEY: $EC2_SSH_PRIVATE_KEY
+          EC2_URL: $EC2_URL
+      - 
+        name: Deploy new container image on EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_URL << 'EOF'
+          sudo docker start postgres_db
+          sudo docker stop ${{ secrets.PROJECT_NAME }}
+
+          sudo docker rm ${{ secrets.PROJECT_NAME }} || true
+          sudo docker rmi ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.PROJECT_NAME }} || true
+
+          sudo docker run -d \
+            --name ${{ secrets.PROJECT_NAME }} \
+            -e "DATABASE_URL=${{ secrets.DATABASE_URL }}" \
+            -p 5000:5000 \
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.PROJECT_NAME }}
+
+          EOF
