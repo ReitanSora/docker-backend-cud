@@ -1,4 +1,4 @@
-name: Deploy App to Digital Ocean on Pull Request Merged
+name: Deploy App to Digital Ocean and EC2 on Pull Request Merged
 
 on:
   pull_request:
