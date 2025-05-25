@@ -126,6 +126,8 @@ jobs:
           sudo docker rm ${{ secrets.PROJECT_NAME }} || true
           sudo docker rmi ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.PROJECT_NAME }} || true
 
+          sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.PROJECT_NAME }}
+
           sudo docker run -d \
             --name ${{ secrets.PROJECT_NAME }} \
             -e "DATABASE_URL=${{ secrets.DATABASE_URL }}" \
